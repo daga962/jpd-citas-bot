@@ -21,6 +21,10 @@ on:
       email:
         description: 'Email del cliente'
         required: false
+      tramite:
+        description: 'Tipo de tramite: huellas o ue (ciudadano UE)'
+        required: false
+        default: 'huellas'
 
 jobs:
   check:
@@ -57,4 +61,5 @@ jobs:
           CLIENTE_PAIS:   ${{ inputs.pais   || secrets.DEFAULT_PAIS }}
           CLIENTE_TEL:    ${{ inputs.tel    || secrets.DEFAULT_TEL }}
           CLIENTE_EMAIL:  ${{ inputs.email  || secrets.DEFAULT_EMAIL }}
+          TRAMITE_TIPO:   ${{ inputs.tramite || 'huellas' }}
         run: python check_citas.py

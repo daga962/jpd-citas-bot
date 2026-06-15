@@ -16,11 +16,15 @@ PFX_B64     = os.environ[f'{CERT_QUIEN.upper()}_PFX_B64']
 PFX_PWD     = os.environ[f'{CERT_QUIEN.upper()}_PFX_PWD']
 
 # Datos del cliente
-CLIENTE_NIE     = os.environ['CLIENTE_NIE']
-CLIENTE_NOMBRE  = os.environ['CLIENTE_NOMBRE']
+CLIENTE_NIE     = os.environ.get('CLIENTE_NIE', 'TEST123')
+CLIENTE_NOMBRE  = os.environ.get('CLIENTE_NOMBRE', 'PRUEBA BOT')
 CLIENTE_PAIS    = os.environ.get('CLIENTE_PAIS', 'VENEZUELA')
 CLIENTE_TEL     = os.environ.get('CLIENTE_TEL', '')
 CLIENTE_EMAIL   = os.environ.get('CLIENTE_EMAIL', '')
+
+# Tipo de trámite a buscar (palabras clave del texto del dropdown)
+# 'huellas' = TIE toma de huellas | 'ue' = ciudadano UE | o texto libre
+TRAMITE_TIPO    = os.environ.get('TRAMITE_TIPO', 'huellas')
 
 # URL base
 ICITA_BASE = 'https://sede.administracionespublicas.gob.es/icpplus'
@@ -89,13 +93,28 @@ def run():
             # ── Paso 2: Seleccionar trámite ──────────────────────────────
             print('→ Buscando trámite de huellas...')
             tramite_sel = page.locator('select').first
+            # Imprimir todos los trámites disponibles para diagnóstico
+            print('  Trámites disponibles:')
+            for opt in tramite_sel.locator('option').all():
+                v = opt.get_attribute('value') or ''
+                t = opt.inner_text().strip()
+                if v: print(f'    [{v}] {t}')
+
+            # Buscar trámite según TRAMITE_TIPO
+            tipo = TRAMITE_TIPO.lower()
+            TRAMITE_KEYWORDS = {
+                'huellas': ['huella', 'expedición de tarjeta', 'tprex'],
+                'ue':      ['ciudadano de la u', 'comunitario', 'registro de ciudadano'],
+            }
+            keywords = TRAMITE_KEYWORDS.get(tipo, [tipo])  # si no es un alias, buscar literal
+
             tramite_val = None
             for opt in tramite_sel.locator('option').all():
                 txt = opt.inner_text().lower()
                 val = opt.get_attribute('value') or ''
-                if 'huella' in txt or ('tarjeta' in txt and 'extranjer' in txt) or 'tprex' in val.lower():
+                if any(k in txt or k in val.lower() for k in keywords):
                     tramite_val = val
-                    print(f'  Trámite encontrado: {val} → {opt.inner_text().strip()}')
+                    print(f'  Trámite seleccionado: [{val}] {opt.inner_text().strip()}')
                     break
 
             if not tramite_val:
