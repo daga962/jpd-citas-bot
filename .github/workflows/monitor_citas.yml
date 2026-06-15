@@ -1,0 +1,60 @@
+name: Monitor Citas TIE Madrid
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # Cada 5 minutos
+  workflow_dispatch:          # También se puede lanzar manualmente
+    inputs:
+      nie:
+        description: 'NIE del cliente'
+        required: false
+      nombre:
+        description: 'Nombre completo del cliente'
+        required: false
+      pais:
+        description: 'País de nacionalidad'
+        required: false
+        default: 'VENEZUELA'
+      tel:
+        description: 'Teléfono para SMS de confirmación'
+        required: false
+      email:
+        description: 'Email del cliente'
+        required: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install chromium
+          python -m playwright install-deps chromium
+
+      - name: Comprobar citas
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          JULIETA_PFX_B64:    ${{ secrets.JULIETA_PFX_B64 }}
+          JULIETA_PFX_PWD:    ${{ secrets.JULIETA_PFX_PWD }}
+          DANIEL_PFX_B64:     ${{ secrets.DANIEL_PFX_B64 }}
+          DANIEL_PFX_PWD:     ${{ secrets.DANIEL_PFX_PWD }}
+          CERT_QUIEN:         julieta
+          CLIENTE_NIE:    ${{ inputs.nie    || secrets.DEFAULT_NIE }}
+          CLIENTE_NOMBRE: ${{ inputs.nombre || secrets.DEFAULT_NOMBRE }}
+          CLIENTE_PAIS:   ${{ inputs.pais   || secrets.DEFAULT_PAIS }}
+          CLIENTE_TEL:    ${{ inputs.tel    || secrets.DEFAULT_TEL }}
+          CLIENTE_EMAIL:  ${{ inputs.email  || secrets.DEFAULT_EMAIL }}
+        run: python check_citas.py
