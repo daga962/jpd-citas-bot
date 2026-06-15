@@ -27,7 +27,7 @@ CLIENTE_EMAIL   = os.environ.get('CLIENTE_EMAIL', '')
 TRAMITE_TIPO    = os.environ.get('TRAMITE_TIPO', 'huellas')
 
 # URL base
-ICITA_BASE = 'https://sede.administracionespublicas.gob.es/icpplus'
+ICITA_BASE = 'https://icp.administracionelectronica.gob.es/icpplus'
 ICITA_URL  = f'{ICITA_BASE}/citar?p=28'
 
 
@@ -89,6 +89,12 @@ def run():
             if '403' in page.title() or 'Forbidden' in page.content():
                 tg('⚠️ Bot citas: IP bloqueada por el gobierno (403). Avisar a Lucas.')
                 return False
+
+            # Esperar a que el desafío JS (TSPD) termine y cargue la página real
+            try:
+                page.wait_for_selector('select', timeout=20000)
+            except PWTimeout:
+                pass  # Puede que ya haya cargado
 
             # ── Paso 2: Seleccionar trámite ──────────────────────────────
             print('→ Buscando trámite de huellas...')
