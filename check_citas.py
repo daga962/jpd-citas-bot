@@ -69,10 +69,18 @@ def run():
         page = ctx.new_page()
 
         try:
-            # ── Paso 1: Página iCITA Madrid ──────────────────────────────
+            # ── Paso 1: Primero probar conectividad básica ────────────────
+            print('→ Probando conectividad...')
+            page.goto('https://www.google.com', timeout=15000)
+            print('  Google OK')
+
+            # ── Paso 2: Página iCITA Madrid ──────────────────────────────
             print('→ Cargando iCITA Madrid...')
-            page.goto(ICITA_URL, timeout=30000)
-            page.wait_for_load_state('networkidle', timeout=20000)
+            page.goto(ICITA_URL, timeout=60000)
+            page.wait_for_load_state('domcontentloaded', timeout=30000)
+            print(f'  Título: {page.title()!r}')
+            print(f'  URL: {page.url}')
+            print(f'  Contenido (500 chars): {page.content()[:500]}')
 
             if '403' in page.title() or 'Forbidden' in page.content():
                 tg('⚠️ Bot citas: IP bloqueada por el gobierno (403). Avisar a Lucas.')
